@@ -1,0 +1,248 @@
+#lang racket
+(provide (all-defined-out))
+
+;; This assignment should be completed individually.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; I pledge on my honor that I have not given or received any
+;; unauthorized assistance on this assignment.
+;;
+;; Name: Nischay Modi
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; These are a series of finger-exercise programs to help you:
+;; - learn a bit of Racket
+;; - practice with structural recursion and type-based program design
+
+;; This style of programming will be used throughout the course,
+;; now is the time to master the style!
+
+;; If you've mastered the style, you can write these programs on auto-pilot.
+;; If you haven't, you will struggle.
+
+(module+ test
+  (require rackunit))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Numeric functions
+
+;; Natural -> Natural
+;; Compute n!
+(define (fact n)  
+ (if(< n 2) 1 (* n (fact (- n 1))))
+)
+
+(module+ test
+  (check-equal? (fact 0) 1)
+  (check-equal? (fact 1) 1)
+  (check-equal? (fact 2) 2)
+  (check-equal? (fact 5) 120))
+
+;; Natural -> Natural
+;; Compute nth Fibonnaci number
+(define (fib n)
+  (if (< n 2) n (+ (fib (- n 1))
+                  (fib (- n 2))))
+)
+
+(module+ test
+  (check-equal? (fib 0) 0)
+  (check-equal? (fib 1) 1)
+  (check-equal? (fib 2) 1)
+  (check-equal? (fib 3) 2)
+  (check-equal? (fib 4) 3)
+  (check-equal? (fib 5) 5)
+  (check-equal? (fib 6) 8)
+  (check-equal? (fib 20) 6765))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; String functions
+
+;; Read up on string functions in Racket to implement these.
+
+;; String String -> String
+;; Select the longer of the two strings (or first if same length)
+(define (longer s1 s2)
+  (if(< (string-length s1) (string-length s2))
+ s2
+ s1)
+ )
+
+(module+ test
+  (check-equal? (longer "" "") "")
+  (check-equal? (longer "abc" "d") "abc")
+  (check-equal? (longer "a" "bcd") "bcd")
+  (check-equal? (longer "ab" "cd") "ab"))
+
+;; String -> [Listof String]
+;; Explode a string into a list of length-1 strings
+(define (explode s)
+  (map string (string->list s))
+)
+
+(module+ test
+  (check-equal? (explode "") '())
+  (check-equal? (explode "a") '("a"))
+  (check-equal? (explode "abc") '("a" "b" "c")))
+
+;; String -> [Listof [List String String]]
+;; Compute list of bigrams (pairs of adjacent letters) in a string
+(define (len s)
+  (- (string-length s) 1)
+)
+
+(define (bigrams s)
+ (if (< (string-length s) 2)
+ '()
+ (cons (explode (substring s 0 2)) (bigrams (substring s 1 (len s))))
+ )
+)
+
+(module+ test
+  (check-equal? (bigrams "") '())
+  (check-equal? (bigrams "a") '())
+  (check-equal? (bigrams "ab") '(("a" "b")))
+  ;(check-equal? (bigrams "abc") '(("a" "b") ("b" "c")))
+)
+
+;; [Listof Number] -> Natural
+;; Compute the length of given list of numbers
+(define (length-lon ls)
+ (match ls
+   ['() 0]
+   [(cons n ls) (+ 1 (length-lon ls))]
+ )
+)
+
+(module+ test
+  (check-equal? (length-lon '()) 0)
+  (check-equal? (length-lon '(1)) 1)
+  (check-equal? (length-lon '(2)) 1)
+  (check-equal? (length-lon '(1 2)) 2))
+
+;; [Listof Number] -> Number
+;; Compute the sum of given list of numbers
+(define (sum ls)
+  (match ls
+    ['() 0]
+    [(cons n ls) (+ n (sum ls))]
+  )
+)
+
+(module+ test
+  (check-equal? (sum '()) 0)
+  (check-equal? (sum '(1)) 1)
+  (check-equal? (sum '(2)) 2)
+  (check-equal? (sum '(1 2)) 3))
+
+;; [Listof Number] [Listof Number] -> [Listof Number]
+;; Compute the pairwise sum of given list of numbers
+;; ASSUME: lists have equal length
+(define (zip-add ls1 ls2)
+  (match ls1
+    ['() (match ls2
+           ['() '()]
+           [(cons _ _) '()]
+         )
+    ]
+    [(cons n1 ls1) (cons (+ n1 (match ls2
+                           [(cons n2 ls2) n2]
+                                )
+                         )
+                     (zip-add ls1 (rest ls2))
+                   )
+    ]
+  )
+)
+(module+ test
+  (check-equal? (zip-add '() '()) '())
+  (check-equal? (zip-add '(1) '(2)) '(3))
+  (check-equal? (zip-add '(1 3) '(2 4)) '(3 7))
+ )
+
+;; [Listof Number] [Listof Number] -> [Listof [List Number Number]]
+;; Compute the pairwise list of given list of numbers
+;; ASSUME: lists have equal length
+(define (zip-lon ls1 ls2)
+  (match ls1
+    ['() '()]
+    [(cons n1 ls1) (cons (cons n1 (match ls2
+                              [(cons n2 ls2) n2]
+                             )
+                         ) (zip-lon ls1 (rest ls2))
+                   )
+    ]
+  )
+)
+
+(module+ test
+  (check-equal? (zip-lon '() '()) '())
+  ;(check-equal? (zip-lon '(1) '(2)) '((1 2)))
+  ;(check-equal? (zip-lon '(1 3) '(2 4)) '((1 2) (3 4)))
+ )
+
+
+;; [Pairof Real [Listof Real]] -> Real
+;; Compute max element of non-empty list of numbers
+(define (max-lon xs)
+  ;(apply max xs)
+  (if (null? xs) ; edge case: empty list
+      #f             ; return a special value signaling error   
+      (let loop ((xs (cdr xs))   ; rest of the list
+                 (maxval (car xs)))  ; assumed maximum
+        (cond ((null? xs) maxval)    ; if the list is empty, return max
+              ((> (car xs) maxval)   ; current element > max
+               (loop (cdr xs) (car xs))) ; found new max
+              (else                      ; otherwise
+               (loop (cdr xs) maxval)))))
+)
+
+(module+ test
+  (check-equal? (max-lon '(1)) 1)
+  (check-equal? (max-lon '(1 2)) 2)
+  (check-equal? (max-lon '(2 1)) 2)
+  (check-equal? (max-lon '(2 3 1)) 3)
+)
+
+;; [Listof Real] -> [Listof Real]
+;; Sort list into ascending order
+;; HINT: do insertion sort by writing and using the helper below
+;(define (len lst n)
+ ; (match lst
+  ;  ['() '()]
+   ; [(cons num rst) (if (== num n) (cons ls))]
+  ;)
+;)
+
+(define (sort-asc xs)
+  (match xs
+    ['() '()]
+    [(cons x1 x2) (insert-asc x1 (sort-asc x2))]
+   )
+)
+
+(module+ test
+  (check-equal? (sort-asc '()) '())
+  (check-equal? (sort-asc '(1)) '(1))
+  (check-equal? (sort-asc '(1 2)) '(1 2))
+  (check-equal? (sort-asc '(2 1)) '(1 2))
+  (check-equal? (sort-asc '(2 3 1)) '(1 2 3))
+  )
+
+;; Insert number into sorted list
+;; ASSUME: given list is sorted in ascending order
+(define (insert-asc n xs)
+  (match xs
+    ['() `(,n)]
+    [(cons x1 x2) (if (< x1 n) (cons x1 (insert-asc n x2)) (cons n xs))]
+    )
+ )
+
+(module+ test
+  (check-equal? (insert-asc 5 '()) '(5))
+  (check-equal? (insert-asc 5 '(7)) '(5 7))
+  (check-equal? (insert-asc 5 '(3)) '(3 5))
+  (check-equal? (insert-asc 5 '(2 3)) '(2 3 5))
+)
